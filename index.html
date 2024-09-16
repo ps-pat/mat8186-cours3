@@ -234,12 +234,64 @@
             </ul>
           </section>
           <section>
-            <h1>Interprétation</h1>
-            <ul>
-              <li><em>Temps</em> d'exécution \( \Rightarrow \) distribution asymétrique</li>
-              <li>Moyenne &#x1f928;</li>
-              <li>Préférable d'utiliser le minimum ou la médiane</li>
-            </ul>
+            <div class="r-stack">
+              <div class="fragment semi-fade-out" data-fragment-index="2">
+                <h1>Interprétation</h1>
+                <ul>
+                  <li><em>Temps</em> d'exécution \( \Rightarrow \) distribution asymétrique</li>
+                  <li>Moyenne &#x1f928;</li>
+                  <li>Préférable d'utiliser le minimum ou la médiane</li>
+                </ul>
+
+              </div>
+
+              <div class="fragment fade-in obox" data-fragment-index="2">
+                <pre>
+                  <code class="language-R hljs" style="font-size:25px;" data-trim data-noescape>
+lmFast <- function(m) {
+    res <- numeric()
+
+    for (kk in 1:m) {
+        random_values <- rnorm(1e6)
+        X <- matrix(random_values, ncol = 20)
+        X <- cbind(1, X)
+        y <- rnorm(5e4)
+
+        qrX <- qr(X)
+        β <- qr.coef(qrX, y)
+        res <- cbind(res, β)
+    }
+    rownames(res) <- c("(Intercept)", paste0("X", 1:20))
+    res
+}
+                  </code>
+                </pre>
+            </div>
+
+              <div class="fragment fade-in obox" data-fragment-index="3">
+                <pre><code class="language-R hljs" style="font-size:25px;" data-trim data-noescape>
+lmSlow <- function(m) {
+    Xs <- rnorm(1e6 * m) |>       ## Génération des données.
+        cutVector(m) |>           ## 1 entrée = 1 simulation.
+        lapply(matrix, ncol = 20) ## vecteur -> matrice.
+
+    ys <- cutVector(rnorm(5e4 * m), m)
+
+    mapply(\(X, y) coef(lm(y ~ X)), Xs, ys)
+}
+                </code></pre>
+              </div>
+            </div>
+
+            <aside class="notes">
+              <ul>
+                <li class="column">L'analyse révèle que</li>
+                <ul>
+                  <li>Le <code class="language-R hljs">lapply</code> de la fonction <code class="language-R hljs">cutVector</code> est la partie du code la plus gourmande en mémoire</li>
+                  <li><code class="language-R hljs">sample</code> est le plus gourmand en temps de calcul</li>
+                </ul>
+              </ul>
+            </aside>
           </section>
         </section>
       </div>
